@@ -5,12 +5,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Root check
+// Simple root route so we can test that the server is online
 app.get("/", (req, res) => {
   res.send("AI Lead Scorer Backend is running 🚀");
 });
 
-// Core scoring logic (moved from frontend, simplified)
+// ---------- CORE SCORING LOGIC ---------- //
+
 function scoreLead(usernameRaw) {
   const username = usernameRaw.trim().replace("@", "");
   const clean = username.toLowerCase();
@@ -137,7 +138,8 @@ function scoreLead(usernameRaw) {
   };
 }
 
-// POST /score-leads — main endpoint
+// ---------- API ENDPOINT ---------- //
+
 app.post("/score-leads", (req, res) => {
   const { usernames } = req.body;
 
@@ -154,7 +156,6 @@ app.post("/score-leads", (req, res) => {
   }
 
   const results = cleaned.map(scoreLead);
-
   results.sort((a, b) => b.buyScore - a.buyScore);
 
   res.json({ results });
