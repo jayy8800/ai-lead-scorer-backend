@@ -80,18 +80,24 @@ function scoreLead(usernameRaw) {
   let dmOpener = "";
   let closeProbability = 0;
 
-  if (buyScore >= 8) {
+    if (buyScore >= 8) {
     pitchAngle = "TIME FREEDOM & SCALING";
     closeProbability = Math.floor(30 + Math.random() * 20);
-    dmOpener = `Hey ${username}! Quick question - if you could free up 2-3 hours/day that you currently spend cold calling and turn that into 30-40 qualified appointments automatically, would that be worth a conversation?`;
+    dmOpener = `Hey ${username} — my AI caller is already booking 30–40 appointments/month for Dubai agents.
+
+You’d still approve the script and leads, the AI just does the boring dials for you. Want a 60-second demo?`;
   } else if (buyScore >= 6) {
     pitchAngle = "CONSISTENCY & PREDICTABILITY";
     closeProbability = Math.floor(20 + Math.random() * 15);
-    dmOpener = `${username} - saw your profile and had to ask: how predictable is your monthly appointment flow right now? Most agents tell me it's up and down. What if it didn't have to be?`;
+    dmOpener = `Hey ${username}, quick q:
+
+If I could make your lead flow look less “good month / bad month” and more “steady 20–30 appointments every month” using an AI caller, would you be open to seeing how?`;
   } else {
     pitchAngle = "COMPETITIVE ADVANTAGE";
     closeProbability = Math.floor(10 + Math.random() * 15);
-    dmOpener = `Hey ${username}! The top Dubai agents are using AI to make 1,500-3,000 calls/month on autopilot. Want to see how they're doing it before your competitors catch on?`;
+    dmOpener = `Hey ${username} — a lot of Dubai agents are quietly using AI callers to make 1,500–3,000 calls/month while they focus on closings.
+
+Curious to see how that would look for your numbers?`;
   }
 
   const objections = [
