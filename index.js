@@ -1,15 +1,9 @@
 import express from "express";
 import cors from "cors";
-import OpenAI from "openai";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "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"
-});
 
 app.get("/", (req, res) => {
   res.send("AI Lead Scorer Backend is running 🚀");
@@ -136,119 +130,59 @@ function scoreLead(usernameRaw) {
   };
 }
 
-// ============= PRO MODE: OpenAI-powered scoring =============
-async function scoreLeadPro(usernameRaw) {
-  const username = usernameRaw.trim().replace("@", "");
+// ============= PRO MODE: Enhanced rule-based (no OpenAI yet) =============
+function scoreLeadPro(usernameRaw) {
+  const basicScore = scoreLead(usernameRaw);
+  const username = basicScore.username;
   
-  try {
-    const prompt = `You are an expert sales intelligence analyst for Dubai real estate agents.
-
-Analyze this Instagram username: "${username}"
-
-Based on the username patterns, provide a detailed lead analysis in JSON format:
-
-{
-  "buyScore": <number 1-10>,
-  "priority": "<HIGH|MEDIUM|LOW>",
-  "businessStage": "<string>",
-  "techOpenness": "<HIGH|MEDIUM|LOW>",
-  "painPoints": [<array of 3-4 specific pain points>],
-  "buyingSignals": [<array of 3-4 buying signals>],
-  "pitchAngles": [
+  // Generate multiple pitch angles
+  const pitchAngles = [
     {
-      "angle": "<pitch angle name>",
-      "dmOpener": "<personalized DM opener for this angle>"
+      angle: "TIME FREEDOM & SCALING",
+      dmOpener: `Hey ${username}! Quick question - if you could free up 2-3 hours/day that you currently spend cold calling and turn that into 30-40 qualified appointments automatically, would that be worth a conversation?`
     },
     {
-      "angle": "<different angle>",
-      "dmOpener": "<different DM opener>"
+      angle: "REVENUE MAXIMIZATION",
+      dmOpener: `${username} - what if I told you the top Dubai agents are closing 30% more deals by automating their cold calling? Want to see how they're doing it?`
     },
     {
-      "angle": "<third angle>",
-      "dmOpener": "<third DM opener>"
+      angle: "COMPETITIVE ADVANTAGE",
+      dmOpener: `Hey ${username}! Before your competitors catch on - the smartest agents in Dubai are using AI to make 1,500+ calls/month on autopilot. 15-min demo?`
     }
-  ],
-  "linkedinStrategy": "<1-2 sentence strategy for finding them on LinkedIn>",
-  "outreachMethod": "<recommended outreach sequence: DM-first, LinkedIn-first, or hybrid>",
-  "aiSummary": "<2-3 sentence executive summary of this lead>",
-  "recommendedNextAction": "<specific next step to take>",
-  "closeProbability": <number 10-50>,
-  "objections": [
-    {
-      "objection": "<likely objection>",
-      "handler": "<how to handle it>"
-    }
-  ]
-}
-
-Be specific, actionable, and personalized. Focus on Dubai real estate context.`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a sales intelligence expert. Always respond with valid JSON only, no markdown formatting."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 1500
-    });
-
-    const rawResponse = completion.choices[0].message.content.trim();
-    
-    // Remove markdown code blocks if present
-    let jsonStr = rawResponse;
-    if (jsonStr.startsWith("```")) {
-      jsonStr = jsonStr.replace(/```json\n?/g, "").replace(/```\n?/g, "");
-    }
-    
-    const aiResult = JSON.parse(jsonStr);
-    
-    return {
-      username,
-      ...aiResult
-    };
-  } catch (error) {
-    console.error("OpenAI Error:", error);
-    
-    // Fallback to enhanced rule-based if AI fails
-    const basicScore = scoreLead(username);
-    return {
-      username,
-      buyScore: basicScore.buyScore,
-      priority: basicScore.priority,
-      businessStage: basicScore.businessStage,
-      techOpenness: basicScore.techOpenness,
-      painPoints: basicScore.painPoints,
-      buyingSignals: basicScore.buyingSignals,
-      pitchAngles: [
-        {
-          angle: "TIME FREEDOM",
-          dmOpener: basicScore.dmOpener
-        },
-        {
-          angle: "REVENUE GROWTH",
-          dmOpener: `${username} - quick question: if you could double your appointments without hiring more people, would that interest you?`
-        },
-        {
-          angle: "COMPETITIVE EDGE",
-          dmOpener: `Hey ${username}, the top agents in Dubai are using AI calling. Want to see what they're doing before everyone else catches on?`
-        }
-      ],
-      linkedinStrategy: "Search for their name + 'Dubai real estate' on LinkedIn, look for RERA certification in profile",
-      outreachMethod: "DM-first strategy (warm up with 2-3 likes, then send personalized DM)",
-      aiSummary: basicScore.aiInsight,
-      recommendedNextAction: "Start with Instagram engagement, then send DM using TIME FREEDOM angle",
-      closeProbability: basicScore.closeProbability,
-      objections: basicScore.objections,
-      _fallback: true
-    };
-  }
+  ];
+  
+  const linkedinStrategy = `Search "${username} Dubai real estate RERA" on LinkedIn. Look for posts about property sales or client testimonials. Send connection request mentioning a recent post.`;
+  
+  const outreachMethod = basicScore.priority === "HIGH" 
+    ? "Instagram DM-first (warm up with 2-3 likes, then personalized DM within 24 hours)"
+    : basicScore.priority === "MEDIUM"
+    ? "Hybrid approach (Instagram warm-up + LinkedIn connection request simultaneously)"
+    : "LinkedIn-first (lower pressure, build rapport over 1-2 weeks before pitch)";
+  
+  const aiSummary = `${basicScore.aiInsight} ${basicScore.businessStage} stage agent with ${basicScore.techOpenness} tech adoption likelihood. Estimated close probability: ${basicScore.closeProbability}%.`;
+  
+  const recommendedNextAction = basicScore.priority === "HIGH"
+    ? `START TODAY: Like their last 3 posts, comment on 1, then send the TIME FREEDOM angle DM tomorrow morning (9-11 AM GST).`
+    : basicScore.priority === "MEDIUM"
+    ? `This week: Engage on Instagram for 3 days, then send REVENUE MAXIMIZATION angle DM on day 4.`
+    : `Long-term nurture: Add to LinkedIn, engage occasionally, revisit in 2-3 weeks when they post about being busy.`;
+  
+  return {
+    username,
+    buyScore: basicScore.buyScore,
+    priority: basicScore.priority,
+    businessStage: basicScore.businessStage,
+    techOpenness: basicScore.techOpenness,
+    painPoints: basicScore.painPoints,
+    buyingSignals: basicScore.buyingSignals,
+    pitchAngles,
+    linkedinStrategy,
+    outreachMethod,
+    aiSummary,
+    recommendedNextAction,
+    closeProbability: basicScore.closeProbability,
+    objections: basicScore.objections
+  };
 }
 
 // ============= ENDPOINTS =============
@@ -273,8 +207,8 @@ app.post("/score-leads", (req, res) => {
   res.json({ results, mode: "demo" });
 });
 
-// Pro endpoint with OpenAI
-app.post("/score-leads-pro", async (req, res) => {
+// Pro endpoint (enhanced rule-based for now)
+app.post("/score-leads-pro", (req, res) => {
   const { usernames } = req.body;
 
   if (!Array.isArray(usernames) || usernames.length === 0) {
@@ -287,23 +221,28 @@ app.post("/score-leads-pro", async (req, res) => {
     return res.status(400).json({ error: "No valid usernames provided" });
   }
 
-  try {
-    // Process leads sequentially to avoid rate limits
-    const results = [];
-    for (const username of cleaned) {
-      const result = await scoreLeadPro(username);
-      results.push(result);
-    }
-    
-    results.sort((a, b) => b.buyScore - a.buyScore);
-    res.json({ results, mode: "pro" });
-  } catch (error) {
-    console.error("Pro scoring error:", error);
-    res.status(500).json({ error: "Failed to process leads", details: error.message });
-  }
+  const results = cleaned.map(scoreLeadPro);
+  results.sort((a, b) => b.buyScore - a.buyScore);
+
+  res.json({ results, mode: "pro" });
 });
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+```
+
+**Commit it.** (Message: "Simplify backend - Pro mode without OpenAI")
+
+---
+
+## **✅ STEP 3: WAIT FOR DEPLOYMENT**
+
+Render will auto-deploy in 2-3 minutes.
+
+Watch the **Logs** - it should say:
+```
+==> Build successful 🎉
+==> Deploying...
+==> Your service is live 🎉
